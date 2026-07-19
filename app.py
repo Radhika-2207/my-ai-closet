@@ -10,11 +10,11 @@ from google import genai
 from google.genai import types
 
 # --- CONFIGURATION ---
-client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+FOLDER_ID = "146n-HmjgJqJ1dLUBFclC2moMmztaHuc7"  
 SERVICE_ACCOUNT_FILE = "credentials.json"  
 
 # Initialize Gemini Client 
-client = genai.Client(api_key="AQ.Ab8RN6IwPF4d3Qw_yRuR30IF7gziwGq1L4g0Ua8ZOs9pcN6Mcw")
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 st.set_page_config(page_title="My AI Style Studio", layout="wide")
 
