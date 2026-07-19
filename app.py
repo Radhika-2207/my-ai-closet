@@ -48,8 +48,11 @@ style_filter = st.sidebar.selectbox(
 # --- SMART FOLDER-DRIVEN CLOSET PARSER ---
 @st.cache_data(ttl=300)
 def load_structured_closet():
-    # Load Google credentials securely from Secrets dictionary
+    # Load Google credentials securely and auto-repair broken newlines
     creds_info = json.loads(st.secrets["GOOGLE_CREDENTIALS_JSON"])
+    if "private_key" in creds_info:
+        creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
+        
     creds = service_account.Credentials.from_service_account_info(
         creds_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
     )
