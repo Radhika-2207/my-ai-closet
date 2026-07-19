@@ -49,9 +49,15 @@ style_filter = st.sidebar.selectbox(
 # --- SMART FOLDER-DRIVEN CLOSET PARSER ---
 @st.cache_data(ttl=300)
 def load_structured_closet():
-    # Read directly from the file we uploaded to your repository
-    creds = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=['https://www.googleapis.com/auth/drive.readonly']
+    # Open the file and manually scrub any hidden broken line breaks
+    with open(SERVICE_ACCOUNT_FILE, "r") as f:
+        creds_info = json.load(f)
+        
+    if "private_key" in creds_info:
+        creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
+        
+    creds = service_account.Credentials.from_service_account_info(
+        creds_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
     )
     drive_service = build('drive', 'v3', credentials=creds)
     
