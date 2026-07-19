@@ -11,6 +11,7 @@ from google.genai import types
 
 # --- CONFIGURATION ---
 FOLDER_ID = "146n-HmjgJqJ1dLUBFclC2moMmztaHuc7"  
+SERVICE_ACCOUNT_FILE = "credentials.json"  # Reading directly from your private locker
 
 # Initialize Gemini Client securely from Streamlit Secrets
 client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
@@ -48,13 +49,9 @@ style_filter = st.sidebar.selectbox(
 # --- SMART FOLDER-DRIVEN CLOSET PARSER ---
 @st.cache_data(ttl=300)
 def load_structured_closet():
-    # Load Google credentials securely and auto-repair broken newlines
-    creds_info = json.loads(st.secrets["GOOGLE_CREDENTIALS_JSON"])
-    if "private_key" in creds_info:
-        creds_info["private_key"] = creds_info["private_key"].replace("\\n", "\n")
-        
-    creds = service_account.Credentials.from_service_account_info(
-        creds_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
+    # Read directly from the file we uploaded to your repository
+    creds = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=['https://www.googleapis.com/auth/drive.readonly']
     )
     drive_service = build('drive', 'v3', credentials=creds)
     
