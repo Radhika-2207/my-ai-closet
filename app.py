@@ -11,9 +11,8 @@ from google.genai import types
 
 # --- CONFIGURATION ---
 FOLDER_ID = "146n-HmjgJqJ1dLUBFclC2moMmztaHuc7"  
-SERVICE_ACCOUNT_FILE = "credentials.json"  
 
-# Initialize Gemini Client 
+# Initialize Gemini Client securely from Streamlit Secrets
 client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
 st.set_page_config(page_title="My AI Style Studio", layout="wide")
@@ -49,8 +48,10 @@ style_filter = st.sidebar.selectbox(
 # --- SMART FOLDER-DRIVEN CLOSET PARSER ---
 @st.cache_data(ttl=300)
 def load_structured_closet():
-    creds = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=['https://www.googleapis.com/auth/drive.readonly']
+    # Load Google credentials securely from Secrets dictionary
+    creds_info = json.loads(st.secrets["GOOGLE_CREDENTIALS_JSON"])
+    creds = service_account.Credentials.from_service_account_info(
+        creds_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
     )
     drive_service = build('drive', 'v3', credentials=creds)
     
@@ -114,7 +115,6 @@ except Exception as e:
     st.error(f"Error loading images from folders: {e}")
     closet_categories, my_clothes = {}, []
 
-# --- INIT PERSISTENT SESSION STATES ---
 if "custom_saved_looks" not in st.session_state:
     st.session_state.custom_saved_looks = []
 if "canvas_items" not in st.session_state:
@@ -164,52 +164,43 @@ with tab2:
                 st.write(audit_response.text)
             except Exception as e: st.error(f"Audit Error: {e}")
 
-# --- TAB 3: CLICK-TO-ADD STUDIO WORKSPACE ---
+# --- TAB 3: CLICK-TO-ADD WORKSPACE ---
 with tab3:
     st.subheader("🎨 Visual Outfit Builder Canvas")
     st.write("Open any folder category bar below and click directly on a piece of clothing to place it onto your moodboard.")
     
     if my_clothes:
-        # --- THE CLICKABLE FOLDER BARS ---
         for cat_name, items_list in closet_categories.items():
-            # Creates an elegant collapsible accordion panel for each folder
             with st.expander(f"📁 OPEN {cat_name.upper()} GALLERY", expanded=False):
                 cols = st.columns(len(items_list) if len(items_list) < 8 else 8)
                 for idx, c_item in enumerate(items_list):
                     with cols[idx % 8]:
                         st.image(c_item['image'], width=110)
-                        # Turn the photo selection action into a clickable form element
                         if st.button(f"➕ Add {c_item['name']}", key=f"add_{c_item['id']}"):
                             if c_item['name'] not in st.session_state.canvas_items:
                                 st.session_state.canvas_items.append(c_item['name'])
                                 st.rerun()
                                 
         st.markdown("---")
-        
-        # --- THE CANVAS PREVIEW ZONE ---
         st.markdown("### 🖼️ My Current Outfit Canvas Layout")
         
         if st.session_state.canvas_items:
-            # Action controls row
             clear_cols = st.columns([1, 10])
             with clear_cols[0]:
                 if st.button("🗑️ Clear Canvas", type="secondary"):
                     st.session_state.canvas_items = []
                     st.rerun()
             
-            # Draw miniatures side by side inside the layout row
             canvas_cols = st.columns(len(st.session_state.canvas_items))
             for idx, filename in enumerate(st.session_state.canvas_items):
                 for c_item in my_clothes:
                     if c_item['name'] == filename:
                         with canvas_cols[idx]:
                             st.image(c_item['image'], width=130, caption=filename)
-                            # Let them easily pop an item back off the board
                             if st.button("❌ Remove", key=f"rem_{idx}"):
                                 st.session_state.canvas_items.remove(filename)
                                 st.rerun()
             
-            # Committing / Saving configurations
             st.markdown("---")
             outfit_title = st.text_input("Name this lookbook creation:", placeholder="e.g., Sophisticated Sunday Dinner")
             if st.button("💾 Save Custom Layout Combo", type="primary"):
@@ -221,7 +212,6 @@ with tab3:
         else:
             st.info("Your canvas moodboard is currently empty. Open a category strip above and select items to build a look.")
         
-        # Saved Gallery History Drawer
         if st.session_state.custom_saved_looks:
             st.markdown("---")
             st.subheader("📁 My Custom Curated Gallery Lookbook")
