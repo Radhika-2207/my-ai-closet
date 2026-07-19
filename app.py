@@ -10,7 +10,7 @@ from google import genai
 from google.genai import types
 
 # --- CONFIGURATION ---
-FOLDER_ID = "146n-HmjgJqJ1dLUBFclC2moMmztaHuc7"  
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 SERVICE_ACCOUNT_FILE = "credentials.json"  
 
 # Initialize Gemini Client 
